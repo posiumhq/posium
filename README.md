@@ -8,17 +8,7 @@
 </div>
 
 <p align="center">
-  <a href='http://makeapullrequest.com'>
-    <img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/>
-  </a>
-  <br>
-  <a href="https://posium.ai/community">
-    <img src="https://img.shields.io/badge/discord-7289da.svg?style=flat-square&logo=discord" alt="discord" style="height: 20px;">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://posium.ai">Website</a> - <a href="https://posium.ai/docs">Docs</a> - <a href="https://posium.ai/community">Community</a> - <a href="https://github.com/posiumhq/posium/issues/new?assignees=&labels=bug&template=bug_report.md">Bug reports</a>
+  <a href="https://posium.ai">Website</a> - <a href="https://posium.ai/docs">Docs</a> - <a href="https://posium.ai/community">Discord</a> - <a href="https://github.com/posiumhq/posium/issues/new?assignees=&labels=bug&template=bug_report.md">Bug reports</a>
 </p>
 
 ## Table of Contents
