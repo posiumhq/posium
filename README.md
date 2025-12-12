@@ -18,7 +18,7 @@
 - [🛠️ Use Cases](#-use-cases)
 - [⚙️ How It Works](#-how-it-works)
 - [🧱 Tech Stack](#-tech-stack)
-- [🤝 Contributing](#-contributing)
+- [🤝 Collaborate](#-collaborate)
 - [📄 License](#-license)
 
 ## 🎯 Overview
@@ -81,13 +81,13 @@ Posium generates tests by using your app like a real user in a browser:
 - 📚 [Fumadocs](https://github.com/fuma-nama/fumadocs)
 - 🌀 [Turborepo](https://turbo.build/)
 
-## 🤝 Contributing
+## 🤝 Collaborate
 
-Contributions are welcome! Please read the [Contributing Guide][contributing] to get started.
+We'd love to connect with you!
 
-- **💡 [Contributing Guide][contributing]**: Learn about our contribution process and coding standards.
+- **💬 [Join the Community](https://posium.ai/community)**: Chat with us on Discord
 - **🐛 [Report an Issue][issues]**: Found a bug? Let us know!
-- **💬 [Start a Discussion][discussions]**: Have ideas or suggestions? We'd love to hear from you.
+- **📬 [Contact Us](https://posium.ai/contact)**: Have questions or want to partner? Reach out!
 
 ## 📄 License
 
@@ -95,7 +95,5 @@ Released under [AGPL-3.0][license].
 
 <!-- REFERENCE LINKS -->
 
-[contributing]: https://github.com/posiumhq/posium/blob/main/CONTRIBUTING.md
 [license]: https://github.com/posiumhq/posium/blob/main/LICENSE
-[discussions]: https://posium.ai/community
 [issues]: https://github.com/posiumhq/posium/issues
