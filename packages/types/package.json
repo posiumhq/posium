@@ -1,0 +1,31 @@
+{
+  "name": "@posium/types",
+  "version": "0.1.0",
+  "description": "Shared type definitions for Posium",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist .turbo",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "zod": "4.2.1"
+  },
+  "devDependencies": {
+    "@posium/eslint-config": "workspace:*",
+    "@posium/typescript-config": "workspace:*",
+    "@types/node": "^20.14.10",
+    "eslint": "^9.28.0",
+    "typescript": "^5.8.2"
+  }
+}

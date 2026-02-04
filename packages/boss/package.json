@@ -1,0 +1,41 @@
+{
+  "name": "@posium/boss",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
+    },
+    "./testing-stub": {
+      "types": "./dist/testing-stub.d.ts",
+      "import": "./dist/testing-stub.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist .turbo",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "pg-boss": "^12.5.3"
+  },
+  "devDependencies": {
+    "@posium/eslint-config": "workspace:*",
+    "@posium/typescript-config": "workspace:*",
+    "@types/node": "^20.14.10",
+    "eslint": "^9.39.1",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
+  }
+}

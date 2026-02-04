@@ -1,0 +1,58 @@
+{
+  "name": "@posium/appconfig",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./fastify": {
+      "types": "./dist/fastify.d.ts",
+      "default": "./dist/fastify.js"
+    },
+    "./zod-env": {
+      "types": "./dist/zod-env.d.ts",
+      "default": "./dist/zod-env.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist .turbo",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.2.1"
+  },
+  "devDependencies": {
+    "@posium/eslint-config": "workspace:*",
+    "@posium/typescript-config": "workspace:*",
+    "@statsig/statsig-node-core": "^0.7.0",
+    "@types/node": "^20.14.10",
+    "eslint": "^9.39.1",
+    "fastify": "^5.3.2",
+    "fastify-plugin": "^5.0.1",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "@statsig/statsig-node-core": "^0.7.0",
+    "fastify": "^5.0.0",
+    "fastify-plugin": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@statsig/statsig-node-core": {
+      "optional": true
+    },
+    "fastify": {
+      "optional": true
+    },
+    "fastify-plugin": {
+      "optional": true
+    }
+  }
+}

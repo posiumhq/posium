@@ -1,0 +1,52 @@
+{
+  "name": "@posium/email",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist .turbo",
+    "dev": "email dev --dir src/templates --port 3333",
+    "lint": "eslint . --max-warnings 0",
+    "manual:e2e:check": "infisical run -- tsx scripts/manual-e2e-check.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.31",
+    "@react-email/render": "^1.0.5",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^0.11.0",
+    "@posium/eslint-config": "workspace:*",
+    "@posium/typescript-config": "workspace:*",
+    "@types/node": "^20.14.10",
+    "@types/nodemailer": "^6.4.17",
+    "@types/react": "^19.0.0",
+    "eslint": "^9.39.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-email": "^3.0.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  }
+}
