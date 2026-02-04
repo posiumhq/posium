@@ -1,0 +1,82 @@
+{
+  "name": "@posium/auth",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js"
+    },
+    "./next": {
+      "types": "./dist/next/index.d.ts",
+      "import": "./dist/next/index.js"
+    },
+    "./fastify": {
+      "types": "./dist/fastify/index.d.ts",
+      "import": "./dist/fastify/index.js"
+    },
+    "./permissions": {
+      "types": "./dist/permissions/index.d.ts",
+      "import": "./dist/permissions/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist .turbo",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "infisical run --env=dev -- vitest run",
+    "test:watch": "infisical run --env=dev -- vitest"
+  },
+  "dependencies": {
+    "@posium/db": "workspace:*",
+    "@posium/email": "workspace:*",
+    "@posium/id": "workspace:*",
+    "better-auth": "^1.3",
+    "drizzle-orm": "^0.41.0",
+    "fastify-plugin": "^5.0.1"
+  },
+  "devDependencies": {
+    "@posium/eslint-config": "workspace:*",
+    "@posium/testdb": "workspace:*",
+    "@posium/typescript-config": "workspace:*",
+    "@types/node": "^20.14.10",
+    "@types/react": "^19.0.0",
+    "eslint": "^9.39.1",
+    "fastify": "^5.0.0",
+    "next": "^15.2.3",
+    "react": "^19.0.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "fastify": ">=5.0.0",
+    "next": ">=14.0.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "fastify": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  }
+}
