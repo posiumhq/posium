@@ -1,0 +1,59 @@
+{
+  "name": "@posium/agents",
+  "version": "0.1.0",
+  "description": "AI-powered browser automation and testing framework",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./shared": {
+      "types": "./dist/shared/index.d.ts",
+      "import": "./dist/shared/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist .turbo",
+    "dev": "tsc --watch",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@openrouter/ai-sdk-provider": "^1.5.4",
+    "@playwright/test": "^1.56.0",
+    "@posium/observability": "workspace:*",
+    "@posium/types": "workspace:*",
+    "@rrweb/types": "2.0.0-alpha.18",
+    "ai": "^5.0.116",
+    "fast-xml-parser": "^4.5.1",
+    "lodash": "^4.17.21",
+    "lru-cache": "^11.1.0",
+    "rrweb": "^2.0.0-alpha.13",
+    "sharp": "^0.33.5",
+    "zod": "4.2.1"
+  },
+  "devDependencies": {
+    "@posium/eslint-config": "workspace:*",
+    "@posium/typescript-config": "workspace:*",
+    "@rrweb/rrweb-plugin-console-record": "2.0.0-alpha.18",
+    "@types/lodash": "^4.17.16",
+    "@types/node": "^20.14.10",
+    "@vitest/coverage-v8": "^3.2.4",
+    "dotenv": "^17.2.3",
+    "esbuild": "^0.24.2",
+    "eslint": "^9.28.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
+  }
+}

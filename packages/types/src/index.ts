@@ -14,7 +14,6 @@ import { z } from "zod";
 export type StepType =
   | "act"
   | "assert"
-  | "qaKit"
   | "goto"
   | "wait"
   | "moduleRef";
@@ -29,7 +28,6 @@ export type StepMethod =
   | "aiCheck" // AI-powered visual check with natural language prompt
   | "wait"
   | "moduleRef" // Reference to a reusable module
-  | "fetchLatestEmail" // QA Kit - fetch latest email content
   | "aiExtract"; // AI-powered extraction from page or text
 
 /**
@@ -123,7 +121,6 @@ export interface TestStep {
 export const stepTypeSchema = z.enum([
   "act",
   "assert",
-  "qaKit",
   "goto",
   "wait",
   "moduleRef",
@@ -138,7 +135,6 @@ export const stepMethodSchema = z.enum([
   "aiCheck",
   "wait",
   "moduleRef",
-  "fetchLatestEmail",
   "aiExtract",
 ]);
 
@@ -227,7 +223,6 @@ export function getStepTypeFromMethod(method: StepMethod): StepType {
   if (method === "wait") return "wait";
   if (method === "goto") return "goto";
   if (method === "moduleRef") return "moduleRef";
-  if (method === "fetchLatestEmail") return "qaKit";
   // All interaction methods map to 'act'
   return "act"; // click, type
 }

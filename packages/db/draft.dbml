@@ -1,0 +1,880 @@
+// =====================================================
+// Better Auth
+// =====================================================
+
+Table user {
+  id text [pk, note: 'cuid2']
+  email text [unique]
+  email_verified boolean
+  name text
+  image text
+
+  // Admin plugin fields
+  role text
+  banned boolean
+  ban_reason text
+  ban_expires_at timestamptz
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table session {
+  id text [pk]
+  user_id text [not null, ref: > user.id]
+  token text [not null, unique]
+  expires_at timestamptz [not null]
+
+  // active org in UI/session context
+  active_org_id text [ref: > org.id]
+  active_team_id text
+  impersonated_by text [ref: > user.id]
+
+  ip_address text
+  user_agent text
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table org {
+  id text [pk, note: 'cuid2']
+  name text
+  slug text [unique]
+  logo text
+  metadata jsonb
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table org_member {
+  id text [pk, note: 'cuid2']
+  user_id text [not null, ref: > user.id]
+  org_id text [not null, ref: > org.id]
+  role text
+
+  created_at timestamptz
+  updated_at timestamptz
+
+  Indexes {
+    (org_id, user_id) [unique]
+  }
+}
+
+Table apikey {
+  id text [pk, note: 'cuid2']
+  user_id text [ref: > user.id]
+
+  name text
+  prefix text
+  start text
+  hashed_key text
+  enabled boolean
+  expires_at timestamptz
+
+  permissions text
+  metadata jsonb
+
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table account {
+  id text [pk, note: 'cuid2']
+  user_id text [not null, ref: > user.id]
+  account_id text [not null]
+  provider_id text [not null]
+  access_token text
+  refresh_token text
+  id_token text
+  access_token_expires_at timestamptz
+  refresh_token_expires_at timestamptz
+  scope text
+  password text
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table verification {
+  id text [pk, note: 'cuid2']
+  identifier text [not null]
+  value text [not null]
+  expires_at timestamptz [not null]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table invitation {
+  id text [pk, note: 'cuid2']
+  email text [not null]
+  role text [not null]
+  inviter_id text [not null, ref: > user.id]
+  org_id text [not null, ref: > org.id]
+  status text [not null] // pending/accepted/expired
+  expires_at timestamptz [not null]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (org_id)
+    (email, org_id)
+  }
+}
+
+
+// =====================================================
+// Product schema (Posium)
+// All ids are cuid2 stored as text.
+// Soft delete via deleted_at.
+// =====================================================
+
+Table project {
+  id text [pk, note: 'cuid2']
+  org_id text [not null, ref: > org.id]
+  slug text [not null]
+  name text [not null]
+  description text
+  logo text
+  url text
+
+  created_by text [ref: > user.id]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (org_id, slug) [unique]
+    (org_id)
+  }
+}
+
+// project members must be org members
+Table project_member {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  org_member_id text [not null, ref: > org_member.id]
+  role text [not null] // owner/admin/editor/viewer
+  created_by text [ref: > user.id]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id, org_member_id) [unique]
+    (project_id)
+    (org_member_id)
+  }
+}
+
+
+// Suites are nested folders.
+// Setup/teardown are modeled as tests and attached at the suite level (not on test rows).
+Table suite {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  parent_suite_id text [ref: > suite.id]
+  name text [not null]
+  description text
+  sort_order int [not null]
+
+  setup_test_id text [ref: > test.id]
+  teardown_test_id text [ref: > test.id]
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id)
+    (project_id, parent_suite_id)
+  }
+}
+
+
+// Tests are versioned.
+// `test` stores metadata only; executable steps are stored only in `test_version`.
+// Unsaved changes live in `test_draft`.
+Table test {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  suite_id text [ref: > suite.id]
+
+  kind text [not null] // test/setup/teardown
+  name text [not null]
+  description text
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id)
+    (project_id, suite_id)
+  }
+}
+
+// Every saved version is a real version (no draft versions).
+// Latest version = highest (test_id, version). Plans always resolve to latest at run start.
+// `based_on_version_id` tracks lineage (e.g., restored from v130 to create v152).
+Table test_version {
+  id text [pk, note: 'cuid2']
+  test_id text [not null, ref: > test.id]
+  version int [not null]
+
+  based_on_version_id text [ref: > test_version.id]
+  changelog text
+
+  steps jsonb [not null] // typed at TS layer
+  snapshot jsonb         // optional metadata/context to aid editing/debugging
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (test_id, version) [unique]
+    (test_id)
+    (based_on_version_id)
+  }
+}
+
+// Unsaved changes / working copy for the editor.
+// On submit: create a new `test_version` and clear/delete the draft.
+Table test_draft {
+  id text [pk, note: 'cuid2']
+  test_id text [not null, ref: > test.id]
+
+  base_version_id text [ref: > test_version.id] // what the draft was started from (optional)
+
+  steps jsonb [not null]
+  snapshot jsonb
+  status text [not null] // active/abandoned
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (test_id) [unique]
+    (test_id, updated_at)
+  }
+}
+
+
+// Modules (reusable steps), versioned (steps stored in module_version)
+Table module {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  name text [not null]
+  description text
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id, name) [unique]
+  }
+}
+
+Table module_version {
+  id text [pk, note: 'cuid2']
+  module_id text [not null, ref: > module.id]
+  version int [not null]
+
+  steps jsonb [not null]
+  snapshot jsonb
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (module_id, version) [unique]
+  }
+}
+
+
+// Environments (configs in jsonb; secrets stored encrypted)
+Table environment {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  name text [not null]
+  is_default boolean [not null] // enforce "one default per project" via partial unique in migrations
+
+  config jsonb [not null]
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id, name) [unique]
+  }
+}
+
+Table environment_secret {
+  id text [pk, note: 'cuid2']
+  environment_id text [not null, ref: > environment.id]
+  key text [not null]
+  encrypted_value text [not null] // envelope encryption / KMS recommended
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (environment_id, key) [unique]
+  }
+}
+
+
+// Plans: bundles tests + suites.
+// No pinned versions: at run start we resolve each test to the latest test_version.
+Table plan {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  name text [not null]
+  description text
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id, name)
+  }
+}
+
+// plan_item references either a test OR a suite (XOR) — enforce via CHECK constraint in migrations.
+Table plan_item {
+  id text [pk, note: 'cuid2']
+  plan_id text [not null, ref: > plan.id]
+
+  test_id text [ref: > test.id]
+  suite_id text [ref: > suite.id]
+
+  sort_order int [not null]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (plan_id, sort_order)
+  }
+}
+
+
+// Schedule: cron + plan (schedules always run via plan)
+Table schedule {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  plan_id text [not null, ref: > plan.id]
+  environment_id text [ref: > environment.id]
+
+  name text [not null]
+  cron text [not null]
+  timezone text [not null]
+  status text [not null] // enabled/disabled
+
+  job_schedule_id text // pgboss schedule id
+  metadata jsonb
+
+  last_run_id text [ref: > run.id]
+  last_run_at timestamptz
+  next_run_at timestamptz
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id)
+    (project_id, status)
+  }
+}
+
+
+// =====================================================
+// Execution
+// - `run` is the umbrella execution record.
+// - `run_test` is one row per executed test within a run.
+// - `report_event` stores raw Playwright reporter hooks/events (lossless JSONB payload).
+// =====================================================
+
+// XOR constraint: run must have plan_id OR (test_id | suite_id) - enforce in migrations
+Table run {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  plan_id text [ref: > plan.id]
+  test_id text [ref: > test.id]
+  suite_id text [ref: > suite.id]
+  schedule_id text [ref: > schedule.id]
+  environment_id text [ref: > environment.id]
+
+  trigger text [not null] // manual/schedule/api/webhook
+  status text [not null]  // queued/running/passed/failed/...
+
+  triggered_by_user_id text [ref: > user.id]
+  triggered_by_api_key_id text [ref: > apikey.id]
+
+  job_id text // pgboss job id
+
+  started_at timestamptz
+  finished_at timestamptz
+  dispatched_at timestamptz // when run was dispatched to external server
+
+  config jsonb [not null] // snapshot run config for reproducibility
+  summary jsonb
+  metadata jsonb
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id, created_at)
+    (project_id, status)
+  }
+}
+
+Table run_test {
+  id text [pk, note: 'cuid2']
+  run_id text [not null, ref: > run.id]
+
+  test_id text [not null, ref: > test.id]
+  test_version_id text [ref: > test_version.id] // resolved latest version at run start
+
+  status text [not null] // queued/running/passed/failed/...
+  attempt int [not null]
+  duration_ms int
+  error jsonb
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (run_id)
+    (run_id, test_id)
+    (test_id)
+  }
+}
+
+Table report_event {
+  id text [pk, note: 'cuid2']
+  run_id text [not null, ref: > run.id] // reporter includes run_id so ingestion is simple
+
+  // Optional: link events directly to the run_test row.
+  // Recommended: embed run_test_id into Playwright annotations so reporter can emit it for onTest* events.
+  run_test_id text [ref: > run_test.id]
+
+  event text [not null] // onBegin/onTestBegin/onTestEnd/onEnd/...
+  data jsonb [not null] // raw payload (typed at TS layer)
+
+  ts timestamptz [not null] // event timestamp
+
+  created_at timestamptz [not null]
+
+  Indexes {
+    (run_id, ts)
+    (run_test_id)
+    (event)
+  }
+}
+
+
+// Artifacts (externalized: S3/R2/etc). Can be run-level or run_test-level.
+Table run_artifact {
+  id text [pk, note: 'cuid2']
+  run_id text [not null, ref: > run.id]
+  run_test_id text [ref: > run_test.id]
+
+  type text [not null] // playwright_report_json/trace/video/...
+  storage_url text [not null]
+  sha256 text
+  size_bytes bigint
+  meta jsonb
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (run_id)
+    (run_test_id)
+  }
+}
+
+
+// AI editor: one conversation per test (unique per test; use partial unique with deleted_at is null in migrations)
+Table ai_conversation {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  test_id text [not null, ref: > test.id]
+  status text [not null] // active/closed
+
+  provider text
+  model text
+  system_prompt text
+  metadata jsonb
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (test_id) [unique]
+    (project_id, created_at)
+  }
+}
+
+Table ai_message {
+  id text [pk, note: 'cuid2']
+  conversation_id text [not null, ref: > ai_conversation.id]
+  role text [not null] // system/user/assistant/tool
+  content text
+  payload jsonb
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (conversation_id, created_at)
+  }
+}
+
+Table ai_message_feedback {
+  id text [pk, note: 'cuid2']
+  message_id text [not null, ref: > ai_message.id]
+  user_id text [not null, ref: > user.id]
+  rating text [not null] // up/down
+  comment text
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (message_id)
+    (message_id, user_id) [unique]
+  }
+}
+
+
+// Org-level integrations (multiple instances per org)
+Table integration {
+  id text [pk, note: 'cuid2']
+  org_id text [not null, ref: > org.id]
+  type text [not null] // slack/jira/webhook/...
+  name text [not null]
+  status text [not null] // active/disabled/error
+
+  config jsonb [not null]
+  encrypted_secrets text [not null]
+
+  created_by text [ref: > user.id]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (org_id)
+    (org_id, type)
+  }
+}
+
+
+// Project webhooks for CI/CD integration
+Table project_hook {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  url text [not null]
+  secret text
+  is_active boolean [not null]
+
+  created_by text [ref: > user.id]
+  last_edited_by text [ref: > user.id]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id)
+  }
+}
+
+Table project_hook_sub {
+  id text [pk, note: 'cuid2']
+  hook_id text [not null, ref: > project_hook.id]
+  event_type text [not null] // run_started/run_completed/run_failed/etc
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (hook_id, event_type) [unique]
+  }
+}
+
+Table project_hook_log {
+  id text [pk, note: 'cuid2']
+  hook_sub_id text [not null, ref: > project_hook_sub.id]
+  payload jsonb [not null]
+  response jsonb
+  sent_at timestamptz [not null]
+  success boolean [not null]
+
+  created_at timestamptz [not null]
+
+  Indexes {
+    (hook_sub_id, sent_at)
+  }
+}
+
+
+// Tags (project-scoped)
+Table tag {
+  id text [pk, note: 'cuid2']
+  project_id text [not null, ref: > project.id]
+  name text [not null]
+  color text
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (project_id, name) [unique]
+  }
+}
+
+Table test_tag {
+  id text [pk, note: 'cuid2']
+  test_id text [not null, ref: > test.id]
+  tag_id text [not null, ref: > tag.id]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (test_id, tag_id) [unique]
+    (tag_id)
+  }
+}
+
+Table suite_tag {
+  id text [pk, note: 'cuid2']
+  suite_id text [not null, ref: > suite.id]
+  tag_id text [not null, ref: > tag.id]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (suite_id, tag_id) [unique]
+    (tag_id)
+  }
+}
+
+
+// User-level preferences (global across all orgs)
+// Use for: theme, locale, timezone, default_org_id, onboarding state
+Table user_preferences {
+  user_id text [pk, ref: > user.id]
+  prefs jsonb [not null]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+// Org-member-level preferences (per user per org)
+// Use for: starred_projects, sidebar state, project sort order, notification settings
+Table org_member_preferences {
+  org_member_id text [pk, ref: > org_member.id]
+  prefs jsonb [not null]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table org_member_notification_channel {
+  id text [pk, note: 'cuid2']
+  org_member_id text [not null, ref: > org_member.id]
+  name text [not null]
+  type text [not null] // email/slack_webhook/discord_webhook/generic_webhook
+  config jsonb // webhook URLs, email addresses, etc
+  enabled boolean [not null]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (org_member_id, type)
+  }
+}
+
+Table org_member_notification_rule {
+  id text [pk, note: 'cuid2']
+  org_member_id text [not null, ref: > org_member.id]
+  event text [not null] // run_failed/run_passed/...
+  channel_id text [not null, ref: > org_member_notification_channel.id]
+  enabled boolean [not null]
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  Indexes {
+    (org_member_id, event)
+  }
+}
+
+Table org_member_notification_log {
+  id text [pk, note: 'cuid2']
+  notification_rule_id text [not null, ref: > org_member_notification_rule.id]
+  body jsonb [not null]
+  response jsonb
+  sent_at timestamptz [not null]
+  success boolean [not null]
+
+  created_at timestamptz [not null]
+
+  Indexes {
+    (notification_rule_id, sent_at)
+  }
+}
+
+
+// Audit log (org/project-scoped)
+Table audit_log {
+  id text [pk, note: 'cuid2']
+  org_id text [ref: > org.id]
+  project_id text [ref: > project.id]
+
+  actor_user_id text [ref: > user.id]
+  actor_api_key_id text [ref: > apikey.id]
+
+  action text [not null]
+  entity_type text [not null]
+  entity_id text [not null]
+  summary text
+  diff jsonb
+  meta jsonb
+  ip text
+  user_agent text
+
+  created_at timestamptz [not null]
+
+  Indexes {
+    (org_id, created_at)
+    (project_id, created_at)
+    (entity_type, entity_id)
+  }
+}
+
+
+// =====================================================
+// Table Groups (for diagram organization)
+// =====================================================
+
+TableGroup auth {
+  user
+  session
+  account
+  verification
+  org
+  org_member
+  apikey
+  invitation
+}
+
+TableGroup projects {
+  project
+  project_member
+}
+
+TableGroup tests {
+  suite
+  test
+  test_version
+  test_draft
+  module
+  module_version
+}
+
+TableGroup environments {
+  environment
+  environment_secret
+}
+
+TableGroup planning {
+  plan
+  plan_item
+  schedule
+}
+
+TableGroup execution {
+  run
+  run_test
+  report_event
+  run_artifact
+}
+
+TableGroup ai_editor {
+  ai_conversation
+  ai_message
+  ai_message_feedback
+}
+
+TableGroup integrations {
+  integration
+}
+
+TableGroup webhooks {
+  project_hook
+  project_hook_sub
+  project_hook_log
+}
+
+TableGroup tags {
+  tag
+  test_tag
+  suite_tag
+}
+
+TableGroup user_settings {
+  user_preferences
+  org_member_preferences
+  org_member_notification_channel
+  org_member_notification_rule
+  org_member_notification_log
+}
+
+TableGroup audit {
+  audit_log
+}

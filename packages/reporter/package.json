@@ -1,0 +1,47 @@
+{
+  "name": "@posium/reporter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "dev": "tsc --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "pnpm build && npx playwright test",
+    "test:e2e:debug": "pnpm build && npx playwright test --debug",
+    "playwright:install": "npx playwright install"
+  },
+  "dependencies": {
+    "@posium/id": "workspace:*",
+    "consola": "^3.4.2"
+  },
+  "devDependencies": {
+    "@posium/eslint-config": "workspace:*",
+    "@posium/typescript-config": "workspace:*",
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^20.11.24",
+    "@vitest/coverage-v8": "^2.1.8",
+    "dotenv": "^16.6.1",
+    "eslint": "^9.39.1",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}
